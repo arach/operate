@@ -56,6 +56,11 @@ Each host snapshot includes:
 - ✅ Persistent inventory state store (JSON file)
 - ✅ Adapter abstraction introduced
 - ✅ Hermes adapter implemented (`execute`, `listTools`)
-- ⏭ Job lifecycle model (`queued/running/streaming/completed/failed`)
-- ⏭ Routing policy engine (machine affinity, fallback ordering, capabilities match)
-- ⏭ Additional adapters (OpenCode, Claude)
+
+## Phase 3 (in progress)
+
+- ✅ Additional adapters implemented (OpenCode, Claude)
+- ✅ Routing policy endpoint (`POST /route/plan`) with scored candidates
+- ✅ Job lifecycle skeleton (`queued/running/completed/failed`)
+- ⏭ Streaming lifecycle and async worker queue
+- ⏭ Persistent jobs store + retries

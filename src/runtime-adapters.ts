@@ -50,6 +50,74 @@ class HermesRuntimeAdapter implements RuntimeAdapter {
   }
 }
 
+class OpenCodeRuntimeAdapter implements RuntimeAdapter {
+  readonly runtime: RuntimeName = "opencode";
+
+  async execute(ssh: SSHExecutor, request: RuntimeExecuteRequest): Promise<RuntimeExecuteResult> {
+    const command = joinCommand(["opencode", ...request.args]);
+    const result = await ssh.run(request.host, command, request.timeoutMs);
+
+    return {
+      runtime: this.runtime,
+      host: request.host,
+      command,
+      stdout: result.stdout,
+      stderr: result.stderr,
+      exitCode: result.exitCode,
+      executedAt: new Date().toISOString()
+    };
+  }
+
+  async listTools(ssh: SSHExecutor, host: string, timeoutMs?: number): Promise<RuntimeExecuteResult> {
+    const command = "opencode --help";
+    const result = await ssh.run(host, command, timeoutMs);
+
+    return {
+      runtime: this.runtime,
+      host,
+      command,
+      stdout: result.stdout,
+      stderr: result.stderr,
+      exitCode: result.exitCode,
+      executedAt: new Date().toISOString()
+    };
+  }
+}
+
+class ClaudeRuntimeAdapter implements RuntimeAdapter {
+  readonly runtime: RuntimeName = "claude";
+
+  async execute(ssh: SSHExecutor, request: RuntimeExecuteRequest): Promise<RuntimeExecuteResult> {
+    const command = joinCommand(["claude", ...request.args]);
+    const result = await ssh.run(request.host, command, request.timeoutMs);
+
+    return {
+      runtime: this.runtime,
+      host: request.host,
+      command,
+      stdout: result.stdout,
+      stderr: result.stderr,
+      exitCode: result.exitCode,
+      executedAt: new Date().toISOString()
+    };
+  }
+
+  async listTools(ssh: SSHExecutor, host: string, timeoutMs?: number): Promise<RuntimeExecuteResult> {
+    const command = "claude --help";
+    const result = await ssh.run(host, command, timeoutMs);
+
+    return {
+      runtime: this.runtime,
+      host,
+      command,
+      stdout: result.stdout,
+      stderr: result.stderr,
+      exitCode: result.exitCode,
+      executedAt: new Date().toISOString()
+    };
+  }
+}
+
 export class RuntimeAdapterRegistry {
   private readonly adapters = new Map<RuntimeName, RuntimeAdapter>();
 
@@ -107,5 +175,9 @@ export class RuntimeService {
 }
 
 export function createDefaultRuntimeRegistry(): RuntimeAdapterRegistry {
-  return new RuntimeAdapterRegistry([new HermesRuntimeAdapter()]);
+  return new RuntimeAdapterRegistry([
+    new HermesRuntimeAdapter(),
+    new OpenCodeRuntimeAdapter(),
+    new ClaudeRuntimeAdapter()
+  ]);
 }

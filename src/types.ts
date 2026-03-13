@@ -72,3 +72,45 @@ export interface RuntimeActionRequest {
   timeoutMs?: number;
   args?: string[];
 }
+
+export interface RoutePlanRequest {
+  requiredRuntime?: RuntimeName;
+  preferredRuntime?: RuntimeName;
+  preferredHost?: string;
+}
+
+export interface RouteCandidate {
+  host: string;
+  runtime: RuntimeName;
+  score: number;
+  reasons: string[];
+}
+
+export interface RoutePlanResult {
+  selected: RouteCandidate | null;
+  candidates: RouteCandidate[];
+  reason?: string;
+  plannedAt: string;
+}
+
+export type JobStatus = "queued" | "running" | "completed" | "failed";
+
+export interface JobRecord {
+  id: string;
+  host: string;
+  runtime: RuntimeName;
+  args: string[];
+  status: JobStatus;
+  createdAt: string;
+  startedAt?: string;
+  finishedAt?: string;
+  result?: RuntimeExecuteResult;
+  error?: string;
+}
+
+export interface CreateJobRequest {
+  host: string;
+  runtime: RuntimeName;
+  args: string[];
+  timeoutMs?: number;
+}

@@ -28,7 +28,7 @@ describe("RuntimeService", () => {
   test("lists supported runtime adapters", () => {
     const ssh = new FakeSSHExecutor();
     const service = new RuntimeService(ssh, createDefaultRuntimeRegistry());
-    expect(service.listSupportedRuntimes()).toEqual(["hermes"]);
+    expect(service.listSupportedRuntimes()).toEqual(["claude", "hermes", "opencode"]);
   });
 
   test("executes hermes command through SSH", async () => {
@@ -52,5 +52,29 @@ describe("RuntimeService", () => {
 
     await service.listTools("hermes", { host: "macmini.local" });
     expect(ssh.calls[0]?.command).toBe("hermes tools");
+  });
+
+  test("executes opencode command through SSH", async () => {
+    const ssh = new FakeSSHExecutor();
+    const service = new RuntimeService(ssh, createDefaultRuntimeRegistry());
+
+    await service.execute("opencode", {
+      host: "macmini.local",
+      args: ["run", "--help"]
+    });
+
+    expect(ssh.calls[0]?.command).toBe("opencode run --help");
+  });
+
+  test("executes claude command through SSH", async () => {
+    const ssh = new FakeSSHExecutor();
+    const service = new RuntimeService(ssh, createDefaultRuntimeRegistry());
+
+    await service.execute("claude", {
+      host: "macmini.local",
+      args: ["--version"]
+    });
+
+    expect(ssh.calls[0]?.command).toBe("claude --version");
   });
 });
