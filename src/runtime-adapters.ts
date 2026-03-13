@@ -1,10 +1,10 @@
 import type {
+  CommandTransport,
   RuntimeActionRequest,
   RuntimeAdapter,
   RuntimeExecuteRequest,
   RuntimeExecuteResult,
-  RuntimeName,
-  SSHExecutor
+  RuntimeName
 } from "./types";
 
 function quoteArg(arg: string): string {
@@ -21,9 +21,9 @@ function joinCommand(parts: string[]): string {
 class HermesRuntimeAdapter implements RuntimeAdapter {
   readonly runtime: RuntimeName = "hermes";
 
-  async execute(ssh: SSHExecutor, request: RuntimeExecuteRequest): Promise<RuntimeExecuteResult> {
+  async execute(transport: CommandTransport, request: RuntimeExecuteRequest): Promise<RuntimeExecuteResult> {
     const command = joinCommand(["hermes", ...request.args]);
-    const result = await ssh.run(request.host, command, request.timeoutMs);
+    const result = await transport.run(request.host, command, request.timeoutMs);
 
     return {
       runtime: this.runtime,
@@ -36,7 +36,7 @@ class HermesRuntimeAdapter implements RuntimeAdapter {
     };
   }
 
-  async listTools(ssh: SSHExecutor, host: string, timeoutMs?: number): Promise<RuntimeExecuteResult> {
+  async listTools(transport: CommandTransport, host: string, timeoutMs?: number): Promise<RuntimeExecuteResult> {
     const request: RuntimeExecuteRequest = {
       host,
       args: ["tools"]
@@ -46,16 +46,16 @@ class HermesRuntimeAdapter implements RuntimeAdapter {
       request.timeoutMs = timeoutMs;
     }
 
-    return this.execute(ssh, request);
+    return this.execute(transport, request);
   }
 }
 
 class OpenCodeRuntimeAdapter implements RuntimeAdapter {
   readonly runtime: RuntimeName = "opencode";
 
-  async execute(ssh: SSHExecutor, request: RuntimeExecuteRequest): Promise<RuntimeExecuteResult> {
+  async execute(transport: CommandTransport, request: RuntimeExecuteRequest): Promise<RuntimeExecuteResult> {
     const command = joinCommand(["opencode", ...request.args]);
-    const result = await ssh.run(request.host, command, request.timeoutMs);
+    const result = await transport.run(request.host, command, request.timeoutMs);
 
     return {
       runtime: this.runtime,
@@ -68,9 +68,9 @@ class OpenCodeRuntimeAdapter implements RuntimeAdapter {
     };
   }
 
-  async listTools(ssh: SSHExecutor, host: string, timeoutMs?: number): Promise<RuntimeExecuteResult> {
+  async listTools(transport: CommandTransport, host: string, timeoutMs?: number): Promise<RuntimeExecuteResult> {
     const command = "opencode --help";
-    const result = await ssh.run(host, command, timeoutMs);
+    const result = await transport.run(host, command, timeoutMs);
 
     return {
       runtime: this.runtime,
@@ -87,9 +87,9 @@ class OpenCodeRuntimeAdapter implements RuntimeAdapter {
 class ClaudeRuntimeAdapter implements RuntimeAdapter {
   readonly runtime: RuntimeName = "claude";
 
-  async execute(ssh: SSHExecutor, request: RuntimeExecuteRequest): Promise<RuntimeExecuteResult> {
+  async execute(transport: CommandTransport, request: RuntimeExecuteRequest): Promise<RuntimeExecuteResult> {
     const command = joinCommand(["claude", ...request.args]);
-    const result = await ssh.run(request.host, command, request.timeoutMs);
+    const result = await transport.run(request.host, command, request.timeoutMs);
 
     return {
       runtime: this.runtime,
@@ -102,9 +102,9 @@ class ClaudeRuntimeAdapter implements RuntimeAdapter {
     };
   }
 
-  async listTools(ssh: SSHExecutor, host: string, timeoutMs?: number): Promise<RuntimeExecuteResult> {
+  async listTools(transport: CommandTransport, host: string, timeoutMs?: number): Promise<RuntimeExecuteResult> {
     const command = "claude --help";
-    const result = await ssh.run(host, command, timeoutMs);
+    const result = await transport.run(host, command, timeoutMs);
 
     return {
       runtime: this.runtime,
@@ -138,7 +138,7 @@ export class RuntimeAdapterRegistry {
 
 export class RuntimeService {
   constructor(
-    private readonly ssh: SSHExecutor,
+    private readonly transport: CommandTransport,
     private readonly adapters: RuntimeAdapterRegistry
   ) {}
 
@@ -161,7 +161,7 @@ export class RuntimeService {
       executeRequest.timeoutMs = request.timeoutMs;
     }
 
-    return adapter.execute(this.ssh, executeRequest);
+    return adapter.execute(this.transport, executeRequest);
   }
 
   async listTools(runtime: RuntimeName, request: RuntimeActionRequest): Promise<RuntimeExecuteResult> {
@@ -170,7 +170,7 @@ export class RuntimeService {
       throw new Error(`Runtime adapter not found: ${runtime}`);
     }
 
-    return adapter.listTools(this.ssh, request.host, request.timeoutMs);
+    return adapter.listTools(this.transport, request.host, request.timeoutMs);
   }
 }
 

@@ -40,6 +40,10 @@ export interface SSHExecutor {
   run(host: string, remoteCommand: string, timeoutMs?: number): Promise<SSHResult>;
 }
 
+export interface CommandTransport {
+  run(host: string, command: string, timeoutMs?: number): Promise<SSHResult>;
+}
+
 export interface InventoryStore {
   load(): Promise<InventorySnapshot | null>;
   save(snapshot: InventorySnapshot): Promise<void>;
@@ -63,8 +67,8 @@ export interface RuntimeExecuteResult {
 
 export interface RuntimeAdapter {
   readonly runtime: RuntimeName;
-  execute(ssh: SSHExecutor, request: RuntimeExecuteRequest): Promise<RuntimeExecuteResult>;
-  listTools(ssh: SSHExecutor, host: string, timeoutMs?: number): Promise<RuntimeExecuteResult>;
+  execute(transport: CommandTransport, request: RuntimeExecuteRequest): Promise<RuntimeExecuteResult>;
+  listTools(transport: CommandTransport, host: string, timeoutMs?: number): Promise<RuntimeExecuteResult>;
 }
 
 export interface RuntimeActionRequest {
@@ -94,6 +98,7 @@ export interface RoutePlanResult {
 }
 
 export type JobStatus = "queued" | "running" | "completed" | "failed";
+export type JobMode = "sync" | "async";
 
 export interface JobRecord {
   id: string;
@@ -106,6 +111,7 @@ export interface JobRecord {
   finishedAt?: string;
   result?: RuntimeExecuteResult;
   error?: string;
+  attempts: number;
 }
 
 export interface CreateJobRequest {
@@ -113,4 +119,10 @@ export interface CreateJobRequest {
   runtime: RuntimeName;
   args: string[];
   timeoutMs?: number;
+  mode?: JobMode;
+}
+
+export interface JobStore {
+  load(): Promise<JobRecord[]>;
+  save(jobs: JobRecord[]): Promise<void>;
 }

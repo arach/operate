@@ -1,9 +1,11 @@
 import { InventoryService } from "./inventory";
 import { JsonFileInventoryStore } from "./inventory-store";
+import { JsonFileJobStore } from "./job-store";
 import { JobService } from "./jobs";
 import { RoutePlannerService } from "./route-planner";
 import { createDefaultRuntimeRegistry, RuntimeService } from "./runtime-adapters";
 import { OpenSSHExecutor } from "./ssh";
+import { SshCommandTransport } from "./transport";
 import type {
   CreateJobRequest,
   DiscoverRequest,
@@ -13,12 +15,15 @@ import type {
 } from "./types";
 
 const ssh = new OpenSSHExecutor();
+const transport = new SshCommandTransport(ssh);
 const inventoryStore = new JsonFileInventoryStore(".operate/inventory-snapshot.json");
 const inventory = new InventoryService(ssh, inventoryStore);
 await inventory.init();
-const runtimeService = new RuntimeService(ssh, createDefaultRuntimeRegistry());
+const runtimeService = new RuntimeService(transport, createDefaultRuntimeRegistry());
 const routePlanner = new RoutePlannerService();
-const jobs = new JobService(runtimeService);
+const jobStore = new JsonFileJobStore(".operate/jobs.json");
+const jobs = new JobService(runtimeService, jobStore);
+await jobs.init();
 
 const RUNTIME_NAMES: RuntimeName[] = ["hermes", "opencode", "claude"];
 
@@ -184,8 +189,28 @@ const server = Bun.serve({
       }
 
       const job = jobs.create(body);
+      if (body.mode === "async") {
+        return json(job, 202);
+      }
+
       const executed = await jobs.run(job.id, body.timeoutMs);
       return json(executed, 201);
+    }
+
+    if (req.method === "POST" && pathname.startsWith("/jobs/") && pathname.endsWith("/retry")) {
+      const parts = pathname.split("/").filter((part) => part.length > 0);
+      const id = parts[1];
+      if (!id) {
+        return json({ error: "Missing job id" }, 400);
+      }
+
+      try {
+        const job = await jobs.retry(id);
+        return json(job, 202);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return json({ error: message }, 404);
+      }
     }
 
     if (req.method === "GET" && pathname.startsWith("/jobs/")) {

@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { createDefaultRuntimeRegistry, RuntimeService } from "../src/runtime-adapters";
+import { SshCommandTransport } from "../src/transport";
 import type { SSHExecutor, SSHResult } from "../src/types";
 
 class FakeSSHExecutor implements SSHExecutor {
@@ -27,13 +28,13 @@ class FakeSSHExecutor implements SSHExecutor {
 describe("RuntimeService", () => {
   test("lists supported runtime adapters", () => {
     const ssh = new FakeSSHExecutor();
-    const service = new RuntimeService(ssh, createDefaultRuntimeRegistry());
+    const service = new RuntimeService(new SshCommandTransport(ssh), createDefaultRuntimeRegistry());
     expect(service.listSupportedRuntimes()).toEqual(["claude", "hermes", "opencode"]);
   });
 
   test("executes hermes command through SSH", async () => {
     const ssh = new FakeSSHExecutor();
-    const service = new RuntimeService(ssh, createDefaultRuntimeRegistry());
+    const service = new RuntimeService(new SshCommandTransport(ssh), createDefaultRuntimeRegistry());
 
     const result = await service.execute("hermes", {
       host: "macmini.local",
@@ -48,7 +49,7 @@ describe("RuntimeService", () => {
 
   test("lists hermes tools via adapter", async () => {
     const ssh = new FakeSSHExecutor();
-    const service = new RuntimeService(ssh, createDefaultRuntimeRegistry());
+    const service = new RuntimeService(new SshCommandTransport(ssh), createDefaultRuntimeRegistry());
 
     await service.listTools("hermes", { host: "macmini.local" });
     expect(ssh.calls[0]?.command).toBe("hermes tools");
@@ -56,7 +57,7 @@ describe("RuntimeService", () => {
 
   test("executes opencode command through SSH", async () => {
     const ssh = new FakeSSHExecutor();
-    const service = new RuntimeService(ssh, createDefaultRuntimeRegistry());
+    const service = new RuntimeService(new SshCommandTransport(ssh), createDefaultRuntimeRegistry());
 
     await service.execute("opencode", {
       host: "macmini.local",
@@ -68,7 +69,7 @@ describe("RuntimeService", () => {
 
   test("executes claude command through SSH", async () => {
     const ssh = new FakeSSHExecutor();
-    const service = new RuntimeService(ssh, createDefaultRuntimeRegistry());
+    const service = new RuntimeService(new SshCommandTransport(ssh), createDefaultRuntimeRegistry());
 
     await service.execute("claude", {
       host: "macmini.local",

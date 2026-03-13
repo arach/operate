@@ -62,5 +62,11 @@ Each host snapshot includes:
 - ✅ Additional adapters implemented (OpenCode, Claude)
 - ✅ Routing policy endpoint (`POST /route/plan`) with scored candidates
 - ✅ Job lifecycle skeleton (`queued/running/completed/failed`)
-- ⏭ Streaming lifecycle and async worker queue
-- ⏭ Persistent jobs store + retries
+
+## Phase 4 (in progress)
+
+- ✅ Persistent jobs store (JSON file)
+- ✅ Async worker queue for `mode: "async"` jobs
+- ✅ Retry control endpoint (`POST /jobs/:id/retry`)
+- ⏭ Streaming lifecycle and cancellation semantics
+- ⏭ Durable queue semantics (priorities, backoff, dead-letter)

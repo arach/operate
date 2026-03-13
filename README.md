@@ -15,6 +15,12 @@ Operate is a control-plane service for machine-aware agent routing.
 - Route planning endpoint (`/route/plan`)
 - Job lifecycle skeleton (`queued/running/completed/failed`)
 
+## Phase 4 (in progress)
+
+- Persistent jobs store (`.operate/jobs.json`)
+- Async queue mode for jobs (`mode: "async"`)
+- Job retry endpoint
+
 ## Quickstart
 
 ```bash
@@ -39,5 +45,6 @@ Default server: `http://localhost:8787`
   - body: `{ "requiredRuntime": "hermes" }` (all fields optional)
 - `GET /jobs`
 - `POST /jobs`
-  - body: `{ "host": "macmini.local", "runtime": "hermes", "args": ["chat", "-q", "hello"] }`
+  - body: `{ "host": "macmini.local", "runtime": "hermes", "args": ["chat", "-q", "hello"], "mode": "sync|async" }`
 - `GET /jobs/:id`
+- `POST /jobs/:id/retry`
