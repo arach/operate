@@ -35,6 +35,33 @@ bun run dev
 
 Default server: `http://localhost:8787`
 
+## CLI usage (clean alternative to raw curl)
+
+```bash
+# health and inventory
+bun run cli health
+bun run cli inventory
+
+# explicit host discovery
+bun run cli discover --hosts art@100.115.12.115
+
+# tailscale discovery
+bun run cli discover tailscale --source ip
+
+# route planning
+bun run cli route plan --preferred-host art@100.115.12.115 --preferred-runtime opencode
+
+# run job
+bun run cli job run --host art@100.115.12.115 --runtime opencode --mode sync -- run --help
+
+# list/get/retry jobs
+bun run cli jobs
+bun run cli job get --id <job-id>
+bun run cli job retry --id <job-id>
+```
+
+Set `OPERATE_URL` if your server is not `http://127.0.0.1:8787`.
+
 ## Transport configuration
 
 Defaults to SSH transport.

@@ -6,9 +6,10 @@
   "scripts": {
     "dev": "bun --watch src/index.ts",
     "start": "bun src/index.ts",
+    "cli": "bun src/cli.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit",
-    "build": "bun build src/index.ts --outdir dist --target bun"
+    "build": "bun build src/index.ts src/cli.ts --outdir dist --target bun"
   },
   "devDependencies": {
     "@types/bun": "latest",
