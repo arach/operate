@@ -70,3 +70,10 @@ Each host snapshot includes:
 - ✅ Retry control endpoint (`POST /jobs/:id/retry`)
 - ⏭ Streaming lifecycle and cancellation semantics
 - ⏭ Durable queue semantics (priorities, backoff, dead-letter)
+
+## Phase 5 (in progress)
+
+- ✅ Transport abstraction hardened with config-driven selection
+- ✅ `ssh` transport (default) via OpenSSH executor
+- ✅ `websocket` transport option for RPC-style remote command execution
+- ⏭ Add first-party WebSocket worker/agent daemon reference implementation

@@ -104,6 +104,33 @@ describe("JobService", () => {
     expect(jobs.get("job-1")?.createdAt).toBe(createdAt);
   });
 
+  test("requeues persisted running jobs on init", async () => {
+    const store = new MemoryJobStore([
+      {
+        id: "job-running",
+        host: "macmini.local",
+        runtime: "hermes",
+        args: ["chat"],
+        status: "running",
+        createdAt: new Date().toISOString(),
+        startedAt: new Date().toISOString(),
+        attempts: 0
+      }
+    ]);
+
+    const runtimeService = new RuntimeService(
+      new SshCommandTransport(new FakeSSHExecutor()),
+      createDefaultRuntimeRegistry()
+    );
+    const jobs = new JobService(runtimeService, store);
+
+    await jobs.init();
+    await Bun.sleep(5);
+
+    expect(jobs.get("job-running")?.status).toBe("completed");
+    expect(jobs.get("job-running")?.attempts).toBe(1);
+  });
+
   test("queues async job and processes queue", async () => {
     const runtimeService = new RuntimeService(
       new SshCommandTransport(new FakeSSHExecutor()),

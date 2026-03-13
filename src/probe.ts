@@ -10,7 +10,7 @@ const PROBE_SCRIPT = [
   "for runtime in hermes opencode claude; do",
   "  if command -v \"$runtime\" >/dev/null 2>&1; then",
   "    path=$(command -v \"$runtime\")",
-  "    version=$($runtime --version 2>/dev/null | sed -n '1p')",
+  "    version=$($runtime --version 2>/dev/null || true)",
   "    echo \"RUNTIME=$runtime|$path|$version\"",
   "  fi",
   "done"

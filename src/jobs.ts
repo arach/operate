@@ -18,7 +18,17 @@ export class JobService {
 
     const persisted = await this.store.load();
     for (const job of persisted) {
+      if (job.status === "running") {
+        job.status = "queued";
+        delete job.startedAt;
+      }
       this.jobs.set(job.id, job);
+    }
+
+    await this.save();
+
+    if (this.list().some((job) => job.status === "queued")) {
+      this.kickQueue();
     }
   }
 

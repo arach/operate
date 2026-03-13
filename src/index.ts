@@ -5,17 +5,20 @@ import { JobService } from "./jobs";
 import { RoutePlannerService } from "./route-planner";
 import { createDefaultRuntimeRegistry, RuntimeService } from "./runtime-adapters";
 import { OpenSSHExecutor } from "./ssh";
-import { SshCommandTransport } from "./transport";
+import { TailscaleDiscoveryService } from "./tailscale-discovery";
+import { createCommandTransport, readTransportConfig } from "./transport";
 import type {
   CreateJobRequest,
   DiscoverRequest,
+  TailscaleDiscoverRequest,
   RoutePlanRequest,
   RuntimeActionRequest,
   RuntimeName
 } from "./types";
 
 const ssh = new OpenSSHExecutor();
-const transport = new SshCommandTransport(ssh);
+const transportConfig = readTransportConfig();
+const transport = createCommandTransport(transportConfig, ssh);
 const inventoryStore = new JsonFileInventoryStore(".operate/inventory-snapshot.json");
 const inventory = new InventoryService(ssh, inventoryStore);
 await inventory.init();
@@ -24,6 +27,7 @@ const routePlanner = new RoutePlannerService();
 const jobStore = new JsonFileJobStore(".operate/jobs.json");
 const jobs = new JobService(runtimeService, jobStore);
 await jobs.init();
+const tailscale = new TailscaleDiscoveryService();
 
 const RUNTIME_NAMES: RuntimeName[] = ["hermes", "opencode", "claude"];
 
@@ -42,7 +46,11 @@ const server = Bun.serve({
     const { pathname } = new URL(req.url);
 
     if (req.method === "GET" && pathname === "/health") {
-      return json({ ok: true, service: "operate" });
+      return json({
+        ok: true,
+        service: "operate",
+        transport: transportConfig.kind
+      });
     }
 
     if (req.method === "GET" && pathname === "/inventory") {
@@ -63,6 +71,38 @@ const server = Bun.serve({
 
       const snapshot = await inventory.discover(body.hosts);
       return json(snapshot, 201);
+    }
+
+    if (req.method === "POST" && pathname === "/inventory/discover/tailscale") {
+      let body: TailscaleDiscoverRequest = {};
+      try {
+        body = (await req.json()) as TailscaleDiscoverRequest;
+      } catch {}
+
+      if (
+        body.sourcePreference &&
+        body.sourcePreference !== "ip" &&
+        body.sourcePreference !== "dns" &&
+        body.sourcePreference !== "both"
+      ) {
+        return json({ error: "sourcePreference must be one of: ip, dns, both" }, 400);
+      }
+
+      try {
+        const targets = await tailscale.discover(body.includeOffline === true, body.sourcePreference ?? "both");
+        const hosts = targets.map((target) => target.host);
+        const snapshot = await inventory.discover(hosts);
+        return json(
+          {
+            tailscaleTargets: targets,
+            snapshot
+          },
+          201
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return json({ error: `Tailscale discovery failed: ${message}` }, 500);
+      }
     }
 
     if (req.method === "GET" && pathname === "/runtimes") {

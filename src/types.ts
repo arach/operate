@@ -30,6 +30,11 @@ export interface DiscoverRequest {
   hosts: string[];
 }
 
+export interface TailscaleDiscoverRequest {
+  includeOffline?: boolean;
+  sourcePreference?: "ip" | "dns" | "both";
+}
+
 export interface SSHResult {
   stdout: string;
   stderr: string;
@@ -42,6 +47,15 @@ export interface SSHExecutor {
 
 export interface CommandTransport {
   run(host: string, command: string, timeoutMs?: number): Promise<SSHResult>;
+}
+
+export type TransportKind = "ssh" | "websocket";
+
+export interface TransportConfig {
+  kind: TransportKind;
+  websocketUrl?: string;
+  websocketAuthToken?: string;
+  websocketConnectTimeoutMs: number;
 }
 
 export interface InventoryStore {
