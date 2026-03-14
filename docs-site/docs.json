@@ -1,0 +1,31 @@
+{
+  "name": "docs-site",
+  "groups": [
+    {
+      "id": "reference",
+      "title": "Reference",
+      "items": [
+        {
+          "id": "api",
+          "title": "Api"
+        },
+        {
+          "id": "architecture",
+          "title": "Architecture"
+        },
+        {
+          "id": "overview",
+          "title": "Overview"
+        },
+        {
+          "id": "privileged-actions",
+          "title": "Privileged-actions"
+        },
+        {
+          "id": "quickstart",
+          "title": "Quickstart"
+        }
+      ]
+    }
+  ]
+}
