@@ -7,11 +7,13 @@
     "dev": "bun --watch src/index.ts",
     "start": "bun src/index.ts",
     "cli": "bun src/cli.ts",
+    "operate": "bun src/cli.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit",
     "build": "bun build src/index.ts src/cli.ts --outdir dist --target bun"
   },
   "devDependencies": {
+    "@arach/dewey": "^0.3.4",
     "@types/bun": "latest",
     "typescript": "^5.8.2"
   }

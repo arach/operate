@@ -16,6 +16,10 @@ class FakeSSHExecutor implements SSHExecutor {
   async run(): Promise<SSHResult> {
     return this.response;
   }
+
+  async runSudo(): Promise<SSHResult> {
+    return this.response;
+  }
 }
 
 class MemoryJobStore implements JobStore {

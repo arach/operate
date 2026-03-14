@@ -18,6 +18,10 @@ class FakeSSHExecutor implements SSHExecutor {
       exitCode: 255
     };
   }
+
+  async runSudo(host: string): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+    return this.run(host);
+  }
 }
 
 describe("InventoryService", () => {

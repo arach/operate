@@ -43,10 +43,23 @@ export interface SSHResult {
 
 export interface SSHExecutor {
   run(host: string, remoteCommand: string, timeoutMs?: number): Promise<SSHResult>;
+  runSudo(
+    host: string,
+    remoteCommand: string,
+    password: string,
+    timeoutMs?: number
+  ): Promise<SSHResult>;
 }
 
 export interface CommandTransport {
   run(host: string, command: string, timeoutMs?: number): Promise<SSHResult>;
+}
+
+export interface PrivilegedRequest {
+  host: string;
+  command: string;
+  password: string;
+  timeoutMs?: number;
 }
 
 export type TransportKind = "ssh" | "websocket";
@@ -139,4 +152,42 @@ export interface CreateJobRequest {
 export interface JobStore {
   load(): Promise<JobRecord[]>;
   save(jobs: JobRecord[]): Promise<void>;
+}
+
+export interface TmuxSessionInfo {
+  name: string;
+  attached: boolean;
+  windows: number;
+  createdUnix: number;
+}
+
+export interface CreateSessionRequest {
+  host: string;
+  name: string;
+  command?: string;
+  cwd?: string;
+  keepAlive?: boolean;
+}
+
+export interface SessionSendRequest {
+  host: string;
+  text: string;
+  enter?: boolean;
+}
+
+export interface SessionCaptureRequest {
+  host: string;
+  lines?: number;
+}
+
+export type OpencodeMode = "command" | "agent";
+
+export interface OpencodeDispatchRequest {
+  host: string;
+  mode: OpencodeMode;
+  message: string;
+  sessionName?: string;
+  cwd?: string;
+  jobMode?: JobMode;
+  timeoutMs?: number;
 }

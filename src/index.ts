@@ -2,14 +2,22 @@ import { InventoryService } from "./inventory";
 import { JsonFileInventoryStore } from "./inventory-store";
 import { JsonFileJobStore } from "./job-store";
 import { JobService } from "./jobs";
+import { OpencodeDispatchService } from "./opencode-dispatch";
+import { PrivilegedService } from "./privileged";
 import { RoutePlannerService } from "./route-planner";
 import { createDefaultRuntimeRegistry, RuntimeService } from "./runtime-adapters";
 import { OpenSSHExecutor } from "./ssh";
 import { TailscaleDiscoveryService } from "./tailscale-discovery";
+import { TmuxSessionService } from "./tmux-sessions";
 import { createCommandTransport, readTransportConfig } from "./transport";
 import type {
+  CreateSessionRequest,
   CreateJobRequest,
   DiscoverRequest,
+  OpencodeDispatchRequest,
+  PrivilegedRequest,
+  SessionCaptureRequest,
+  SessionSendRequest,
   TailscaleDiscoverRequest,
   RoutePlanRequest,
   RuntimeActionRequest,
@@ -19,15 +27,32 @@ import type {
 const ssh = new OpenSSHExecutor();
 const transportConfig = readTransportConfig();
 const transport = createCommandTransport(transportConfig, ssh);
+const privileged = new PrivilegedService(ssh);
 const inventoryStore = new JsonFileInventoryStore(".operate/inventory-snapshot.json");
 const inventory = new InventoryService(ssh, inventoryStore);
 await inventory.init();
 const runtimeService = new RuntimeService(transport, createDefaultRuntimeRegistry());
+const sessions = new TmuxSessionService(transport);
 const routePlanner = new RoutePlannerService();
 const jobStore = new JsonFileJobStore(".operate/jobs.json");
 const jobs = new JobService(runtimeService, jobStore);
 await jobs.init();
 const tailscale = new TailscaleDiscoveryService();
+const opencodeDispatch = new OpencodeDispatchService({
+  async createJob(request: CreateJobRequest) {
+    const job = jobs.create(request);
+    if (request.mode !== "async") {
+      await jobs.run(job.id, request.timeoutMs);
+    }
+    return { id: job.id };
+  },
+  async createSession(request: CreateSessionRequest) {
+    await sessions.create(request);
+  },
+  async sendSession(name, request: SessionSendRequest) {
+    await sessions.send(name, request);
+  }
+});
 
 const RUNTIME_NAMES: RuntimeName[] = ["hermes", "opencode", "claude"];
 
@@ -132,6 +157,60 @@ const server = Bun.serve({
       return json(plan, 201);
     }
 
+    if (req.method === "POST" && pathname === "/opencode/dispatch") {
+      let body: OpencodeDispatchRequest;
+      try {
+        body = (await req.json()) as OpencodeDispatchRequest;
+      } catch {
+        return json({ error: "Invalid JSON body" }, 400);
+      }
+
+      if (!body.host || typeof body.host !== "string") {
+        return json({ error: "Body must include host: string" }, 400);
+      }
+      if (!body.message || typeof body.message !== "string") {
+        return json({ error: "Body must include message: string" }, 400);
+      }
+      if (body.mode !== "command" && body.mode !== "agent") {
+        return json({ error: "Body must include mode: command|agent" }, 400);
+      }
+
+      try {
+        const result = await opencodeDispatch.dispatch(body);
+        return json(result, 201);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return json({ error: message }, 400);
+      }
+    }
+
+    if (req.method === "POST" && pathname === "/privileged/sudo") {
+      let body: PrivilegedRequest;
+      try {
+        body = (await req.json()) as PrivilegedRequest;
+      } catch {
+        return json({ error: "Invalid JSON body" }, 400);
+      }
+
+      if (!body.host || typeof body.host !== "string") {
+        return json({ error: "Body must include host: string" }, 400);
+      }
+      if (!body.command || typeof body.command !== "string") {
+        return json({ error: "Body must include command: string" }, 400);
+      }
+      if (!body.password || typeof body.password !== "string") {
+        return json({ error: "Body must include password: string" }, 400);
+      }
+
+      try {
+        const result = await privileged.runSudo(body);
+        return json(result, 201);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return json({ error: message }, 400);
+      }
+    }
+
     if (req.method === "POST" && pathname.startsWith("/runtimes/") && pathname.endsWith("/tools")) {
       const parts = pathname.split("/").filter((part) => part.length > 0);
       const runtime = parts[1] as RuntimeName | undefined;
@@ -206,6 +285,156 @@ const server = Bun.serve({
 
     if (req.method === "GET" && pathname === "/jobs") {
       return json({ jobs: jobs.list() });
+    }
+
+    if (req.method === "POST" && pathname === "/sessions") {
+      let body: CreateSessionRequest;
+      try {
+        body = (await req.json()) as CreateSessionRequest;
+      } catch {
+        return json({ error: "Invalid JSON body" }, 400);
+      }
+
+      if (!body.host || typeof body.host !== "string") {
+        return json({ error: "Body must include host: string" }, 400);
+      }
+      if (!body.name || typeof body.name !== "string") {
+        return json({ error: "Body must include name: string" }, 400);
+      }
+
+      try {
+        await sessions.create(body);
+        return json({ ok: true, host: body.host, name: body.name }, 201);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return json({ error: message }, 400);
+      }
+    }
+
+    if (req.method === "POST" && pathname === "/sessions/list") {
+      let body: { host?: string };
+      try {
+        body = (await req.json()) as { host?: string };
+      } catch {
+        return json({ error: "Invalid JSON body" }, 400);
+      }
+
+      if (!body.host || typeof body.host !== "string") {
+        return json({ error: "Body must include host: string" }, 400);
+      }
+
+      try {
+        const list = await sessions.list(body.host);
+        return json({ host: body.host, sessions: list }, 201);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return json({ error: message }, 400);
+      }
+    }
+
+    if (req.method === "POST" && pathname === "/sessions/check") {
+      let body: { host?: string };
+      try {
+        body = (await req.json()) as { host?: string };
+      } catch {
+        return json({ error: "Invalid JSON body" }, 400);
+      }
+
+      if (!body.host || typeof body.host !== "string") {
+        return json({ error: "Body must include host: string" }, 400);
+      }
+
+      try {
+        const status = await sessions.check(body.host);
+        return json({ host: body.host, tmux: status }, 201);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return json({ error: message }, 400);
+      }
+    }
+
+    if (req.method === "POST" && pathname.startsWith("/sessions/") && pathname.endsWith("/send")) {
+      const parts = pathname.split("/").filter((part) => part.length > 0);
+      const name = parts[1];
+      if (!name) {
+        return json({ error: "Missing session name" }, 400);
+      }
+
+      let body: SessionSendRequest;
+      try {
+        body = (await req.json()) as SessionSendRequest;
+      } catch {
+        return json({ error: "Invalid JSON body" }, 400);
+      }
+
+      if (!body.host || typeof body.host !== "string") {
+        return json({ error: "Body must include host: string" }, 400);
+      }
+      if (typeof body.text !== "string") {
+        return json({ error: "Body must include text: string" }, 400);
+      }
+
+      try {
+        await sessions.send(name, body);
+        return json({ ok: true, host: body.host, name }, 201);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return json({ error: message }, 400);
+      }
+    }
+
+    if (req.method === "POST" && pathname.startsWith("/sessions/") && pathname.endsWith("/capture")) {
+      const parts = pathname.split("/").filter((part) => part.length > 0);
+      const name = parts[1];
+      if (!name) {
+        return json({ error: "Missing session name" }, 400);
+      }
+
+      let body: SessionCaptureRequest;
+      try {
+        body = (await req.json()) as SessionCaptureRequest;
+      } catch {
+        return json({ error: "Invalid JSON body" }, 400);
+      }
+
+      if (!body.host || typeof body.host !== "string") {
+        return json({ error: "Body must include host: string" }, 400);
+      }
+
+      try {
+        const output = await sessions.capture(name, body);
+        return json({ host: body.host, name, output }, 201);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return json({ error: message }, 400);
+      }
+    }
+
+    if (req.method === "POST" && pathname.startsWith("/sessions/") && pathname.endsWith("/kill")) {
+      const parts = pathname.split("/").filter((part) => part.length > 0);
+      const name = parts[1];
+      if (!name) {
+        return json({ error: "Missing session name" }, 400);
+      }
+
+      let body: { host?: string };
+      try {
+        body = (await req.json()) as { host?: string };
+      } catch {
+        return json({ error: "Invalid JSON body" }, 400);
+      }
+
+      if (!body.host || typeof body.host !== "string") {
+        return json({ error: "Body must include host: string" }, 400);
+      }
+
+      try {
+        await sessions.kill(name, body.host);
+        return json({ ok: true, host: body.host, name }, 201);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return json({ error: message }, 400);
+      }
     }
 
     if (req.method === "POST" && pathname === "/jobs") {

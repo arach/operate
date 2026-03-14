@@ -39,28 +39,49 @@ Default server: `http://localhost:8787`
 
 ```bash
 # health and inventory
-bun run cli health
-bun run cli inventory
+bun run operate health
+bun run operate inventory
 
 # explicit host discovery
-bun run cli discover --hosts art@100.115.12.115
+bun run operate discover --hosts arts
 
 # tailscale discovery
-bun run cli discover tailscale --source ip
+bun run operate discover tailscale --source ip
 
 # route planning
-bun run cli route plan --preferred-host art@100.115.12.115 --preferred-runtime opencode
+bun run operate route plan --preferred-host arts --preferred-runtime opencode
 
 # run job
-bun run cli job run --host art@100.115.12.115 --runtime opencode --mode sync -- run --help
+bun run operate job run --host arts --runtime opencode --mode sync -- run --help
 
 # list/get/retry jobs
-bun run cli jobs
-bun run cli job get --id <job-id>
-bun run cli job retry --id <job-id>
+bun run operate jobs
+bun run operate job get --id <job-id>
+bun run operate job retry --id <job-id>
+
+# tmux sessions (long-running remote processes)
+bun run operate session check --host arts
+bun run operate session create --host arts --name op-test --command "opencode run --help"
+bun run operate session create-agent --host arts --name op-agent
+bun run operate session list --host arts
+bun run operate session send --host arts --name op-test --text "echo HELLO"
+bun run operate session capture --host arts --name op-test --lines 120
+bun run operate session kill --host arts --name op-test
+
+# shorthand agent UX (host alias + session)
+bun run operate agent arts -s op-agent -- "echo hello from session"
 ```
 
-Set `OPERATE_URL` if your server is not `http://127.0.0.1:8787`.
+Configure defaults (clean, no env prefix needed):
+
+```bash
+bun run operate config set-url http://127.0.0.1:8787
+bun run operate config alias set arts art@100.115.12.115
+bun run operate config alias list
+```
+
+Project-local alias/url config lives in `.operate.json`.
+You can still override per command with `--url` or `-u`.
 
 ## Transport configuration
 
@@ -110,8 +131,48 @@ If using the macOS app binary path, Operate forces `TAILSCALE_BE_CLI=1` for CLI-
   - body: `{ "host": "macmini.local", "runtime": "hermes", "args": ["chat", "-q", "hello"], "mode": "sync|async" }`
 - `GET /jobs/:id`
 - `POST /jobs/:id/retry`
+- `POST /sessions`
+  - body: `{ "host": "art@100.115.12.115", "name": "op-test", "command": "opencode run --help" }`
+- `POST /sessions/check`
+  - body: `{ "host": "art@100.115.12.115" }`
+- `POST /sessions/list`
+  - body: `{ "host": "art@100.115.12.115" }`
+- `POST /sessions/:name/send`
+  - body: `{ "host": "art@100.115.12.115", "text": "echo hi", "enter": true }`
+- `POST /sessions/:name/capture`
+  - body: `{ "host": "art@100.115.12.115", "lines": 200 }`
+- `POST /sessions/:name/kill`
+  - body: `{ "host": "art@100.115.12.115" }`
 
 ### Async jobs behavior
 
 When `mode: "async"`, `POST /jobs` returns `202` immediately after enqueueing.
 The returned job may be `queued` or `running`; poll `GET /jobs/:id` until terminal `completed|failed`.
+
+## Privileged operations (password-required tasks)
+
+Operate is designed for non-interactive execution.
+
+- Prefer user-level installs/commands first (e.g., Nix profile).
+- Avoid interactive `sudo` prompts in API/CLI paths.
+- For privileged workflows, use an explicit allowlisted mechanism (future phase).
+
+Current explicit path (disabled by default):
+
+- Set `OPERATE_ENABLE_PRIVILEGED=1`
+- Run:
+  - `bun run cli privileged sudo --host <host> --command '<cmd>' --password '<pw>'`
+
+Security caveat:
+
+- Password values passed on CLI can be exposed via shell history/process inspection.
+- Prefer host-level `NOPASSWD` allowlists or dedicated privileged helpers for production.
+
+See: `docs/privileged-actions.md`
+
+## Documentation index
+
+- `docs/overview.md` — product goals and core concepts
+- `docs/quickstart.md` — first-run setup and command flows
+- `docs/architecture.md` — internals and phase progression
+- `docs/runbooks/art-mini.md` — concrete operations on Arts Mini

@@ -23,6 +23,10 @@ class FakeSSHExecutor implements SSHExecutor {
       exitCode: 0
     };
   }
+
+  async runSudo(host: string, remoteCommand: string, password: string, timeoutMs?: number): Promise<SSHResult> {
+    return this.run(host, `sudo:${remoteCommand}:${password}`, timeoutMs);
+  }
 }
 
 describe("RuntimeService", () => {
