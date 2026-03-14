@@ -1,10 +1,11 @@
 @layer base {
   .doc-content {
     font-size: 15px;
-    line-height: 1.65;
+    line-height: 1.72;
     color: var(--color-text);
     overflow-wrap: break-word;
     min-width: 0;
+    text-wrap: pretty;
   }
 
   .doc-content h1[id] {
@@ -12,26 +13,26 @@
   }
 
   .doc-content h1 {
-    font-family: 'Geist Mono', monospace;
+    font-family: 'Instrument Serif', serif;
     font-weight: 400;
-    letter-spacing: 0.025em;
-    font-size: 1.75rem;
+    letter-spacing: -0.02em;
+    font-size: clamp(2rem, 4vw, 2.6rem);
     color: var(--color-text);
     margin-top: 0;
-    margin-bottom: 0.75rem;
-    line-height: 1.2;
+    margin-bottom: 0.85rem;
+    line-height: 1.08;
   }
 
   .doc-content h2 {
-    font-family: 'Geist Mono', monospace;
+    font-family: 'Instrument Serif', serif;
     font-weight: 400;
-    letter-spacing: 0.025em;
-    font-size: 1.25rem;
+    letter-spacing: -0.01em;
+    font-size: 1.55rem;
     color: var(--color-text);
-    margin-top: 2rem;
+    margin-top: 2.2rem;
     margin-bottom: 0.5rem;
     padding-bottom: 0.375rem;
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: 1px solid color-mix(in srgb, var(--color-border) 62%, transparent);
     line-height: 1.3;
     scroll-margin-top: 100px;
   }
@@ -41,12 +42,12 @@
   }
 
   .doc-content h3 {
-    font-family: 'Geist Mono', monospace;
+    font-family: 'Instrument Serif', serif;
     font-weight: 400;
-    letter-spacing: 0.025em;
-    font-size: 1.0625rem;
+    letter-spacing: -0.01em;
+    font-size: 1.2rem;
     color: var(--color-text);
-    margin-top: 1.5rem;
+    margin-top: 1.65rem;
     margin-bottom: 0.375rem;
     line-height: 1.4;
     scroll-margin-top: 100px;
@@ -117,9 +118,9 @@
   }
 
   .doc-content pre {
-    background: #111111 !important;
-    border: 1px solid var(--color-border);
-    border-radius: 0.5rem;
+    background: #091122 !important;
+    border: 1px solid color-mix(in srgb, var(--color-border) 72%, transparent);
+    border-radius: 0.75rem;
     padding: 1rem;
     overflow-x: auto;
     margin-bottom: 1.25rem;
@@ -151,7 +152,7 @@
 
   .doc-content hr {
     border: none;
-    border-top: 1px solid var(--color-border);
+    border-top: 1px solid color-mix(in srgb, var(--color-border) 62%, transparent);
     margin: 1.5rem 0;
   }
 

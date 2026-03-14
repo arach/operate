@@ -2,6 +2,12 @@
 import { navGroups } from '../lib/nav'
 
 const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/'
+const baseUrl = Astro.site?.pathname ?? '/'
+const withBase = (path: string) => `${baseUrl.replace(/\/$/, '')}${path}`
+const basePrefix = baseUrl.replace(/\/$/, '')
+const normalizedPath = currentPath.startsWith(basePrefix)
+  ? currentPath.slice(basePrefix.length) || '/'
+  : currentPath
 ---
 
 <nav>
@@ -14,11 +20,11 @@ const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/'
       <div data-nav-list>
         <ul class="dl-nav-list">
           {group.items.map((item) => {
-            const isActive = currentPath === item.href
+            const isActive = normalizedPath === item.href
             return (
               <li>
                 <a
-                  href={item.href}
+                  href={withBase(item.href)}
                   class={`dl-nav-item ${isActive ? 'active' : ''}`}
                 >
                   {item.title}
@@ -34,8 +40,8 @@ const currentPath = Astro.url.pathname.replace(/\/$/, '') || '/'
   <div class="dl-nav-section dl-nav-section--bordered">
     <div class="dl-nav-label dl-nav-label--static">For AI Agents</div>
     <ul class="dl-nav-list">
-      <li><a href="/llms.txt" class="dl-nav-item dl-nav-item--muted">llms.txt</a></li>
-      <li><a href="/llms-full.txt" class="dl-nav-item dl-nav-item--muted">llms-full.txt</a></li>
+      <li><a href={withBase('/llms.txt')} class="dl-nav-item dl-nav-item--muted">llms.txt</a></li>
+      <li><a href={withBase('/llms-full.txt')} class="dl-nav-item dl-nav-item--muted">llms-full.txt</a></li>
     </ul>
   </div>
 </nav>

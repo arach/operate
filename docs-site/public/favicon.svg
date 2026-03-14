@@ -1,0 +1,10 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Operate">
+  <defs>
+    <linearGradient id="operateGradient" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4f9dff" />
+      <stop offset="1" stop-color="#18c6a3" />
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="16" fill="#0b1017" />
+  <path d="M18 32C18 24.268 24.268 18 32 18H46V28H32C29.791 28 28 29.791 28 32C28 34.209 29.791 36 32 36H46V46H32C24.268 46 18 39.732 18 32Z" fill="url(#operateGradient)" />
+</svg>
