@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "workspaces": ["docs-site", "landing"],
   "scripts": {
     "dev": "bun --watch src/index.ts",
     "start": "bun src/index.ts",
@@ -10,7 +11,11 @@
     "operate": "bun src/cli.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit",
-    "build": "bun build src/index.ts src/cli.ts --outdir dist --target bun"
+    "build": "bun build src/index.ts src/cli.ts --outdir dist --target bun",
+    "build:site": "bun run scripts/build-site.mjs",
+    "dev:all": "bun run scripts/dev-all.ts",
+    "dev:landing": "cd landing && bun run dev",
+    "dev:docs": "cd docs-site && bun run dev"
   },
   "devDependencies": {
     "@arach/dewey": "^0.3.4",

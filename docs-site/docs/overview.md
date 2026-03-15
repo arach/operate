@@ -9,6 +9,10 @@ In practical terms, Operate lets you:
 - run one-shot jobs,
 - and maintain long-running named sessions for iterative workflows.
 
+![Operate control plane diagram](/diagrams/operate-control-plane.svg)
+
+_Control plane view: local API/CLI clients, inventory + routing decisions, and remote execution on Arts via jobs/sessions._
+
 ## Why Operate exists
 
 Real agent workflows usually sprawl across multiple machines and runtimes. Operate provides one consistent API and CLI so execution is predictable, observable, and reusable.

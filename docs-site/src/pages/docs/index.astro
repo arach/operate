@@ -1,0 +1,192 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro'
+import { navGroups } from '../../lib/nav'
+
+const baseUrl = Astro.site?.pathname ?? '/'
+const withBase = (path: string) => `${baseUrl.replace(/\/$/, '')}${path}`
+
+const quickActions = [
+  {
+    title: 'Start local control plane',
+    command: 'bun run start',
+    note: 'Runs Operate API on 127.0.0.1:8787',
+  },
+  {
+    title: 'Probe Arts capabilities',
+    command: 'bun run operate discover --hosts arts',
+    note: 'Refresh runtime inventory snapshot',
+  },
+  {
+    title: 'Create remote agent session',
+    command: 'bun run operate session create-agent --host arts --name op-agent',
+    note: 'Persistent tmux-backed OpenCode context',
+  },
+]
+---
+
+<DocsLayout title="Documentation" headings={[]} rawMarkdown="" agentMarkdown="">
+  <section class="op-hero">
+    <p class="op-kicker">Operate control plane</p>
+    <h1 class="op-title">Run remote agents with predictable control.</h1>
+    <p class="op-subtitle">
+      Operate gives you one routing layer for host discovery, runtime selection, jobs, and tmux-backed sessions.
+      Keep local ergonomics and remote execution in a single workflow.
+    </p>
+    <div class="op-hero-actions">
+      <a href={withBase('/docs/quickstart')} class="op-btn op-btn-primary">Read quickstart</a>
+      <a href={withBase('/docs/api')} class="op-btn">View API reference</a>
+    </div>
+  </section>
+
+  <section class="op-command-strip" aria-label="Common operate commands">
+    {quickActions.map((action) => (
+      <div class="op-command-card">
+        <p class="op-command-title">{action.title}</p>
+        <code>{action.command}</code>
+        <p class="op-command-note">{action.note}</p>
+      </div>
+    ))}
+  </section>
+
+  <div class="space-y-10 op-doc-groups">
+    {navGroups.map((group) => (
+      <div>
+        <h2 id={group.id} class="text-xl font-semibold tracking-tight mb-4" style="border: none; margin-top: 0; padding-top: 0;">{group.title}</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px;">
+          {group.items.map((item) => (
+            <a
+              href={withBase(item.href)}
+              class="group block rounded-lg border border-[var(--color-border)] p-5 text-sm no-underline transition hover:border-[var(--color-text-muted)] hover:bg-[var(--color-surface)]"
+            >
+              <span class="font-medium text-[var(--color-text)]">{item.title}</span>
+              <span class="mt-2 flex items-center gap-1 text-xs text-[var(--color-text-muted)]">
+                Read more
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </span>
+            </a>
+          ))}
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <style is:inline>
+    .op-hero {
+      margin-bottom: 24px;
+      padding: 28px;
+      border-radius: 20px;
+      border: 1px solid color-mix(in srgb, var(--color-border) 72%, transparent);
+      background:
+        radial-gradient(circle at 84% 12%, color-mix(in srgb, var(--color-accent-2) 22%, transparent), transparent 45%),
+        radial-gradient(circle at 0% 100%, color-mix(in srgb, var(--color-accent) 18%, transparent), transparent 52%),
+        color-mix(in srgb, var(--color-surface) 92%, transparent);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .op-kicker {
+      margin: 0;
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--color-text-muted);
+    }
+
+    .op-title {
+      margin: 10px 0 0;
+      font-family: 'Instrument Serif', serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      border: 0;
+      padding: 0;
+    }
+
+    .op-subtitle {
+      margin: 14px 0 0;
+      max-width: 62ch;
+      color: var(--color-text-muted);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .op-hero-actions {
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .op-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      border: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent);
+      padding: 8px 14px;
+      font-family: 'Geist Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: all 0.16s ease;
+      color: var(--color-text);
+      background: color-mix(in srgb, var(--color-surface) 80%, transparent);
+    }
+
+    .op-btn:hover {
+      border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
+      transform: translateY(-1px);
+    }
+
+    .op-btn-primary {
+      color: #ffffff;
+      border-color: color-mix(in srgb, var(--color-accent) 55%, transparent);
+      background: linear-gradient(120deg, var(--color-accent), var(--color-accent-2));
+    }
+
+    [data-theme='dark'] .op-btn-primary {
+      color: #08131a;
+    }
+
+    .op-command-strip {
+      margin-bottom: 30px;
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    }
+
+    .op-command-card {
+      border-radius: 14px;
+      border: 1px solid color-mix(in srgb, var(--color-border) 72%, transparent);
+      background: color-mix(in srgb, var(--color-surface-muted) 86%, transparent);
+      padding: 12px 14px;
+    }
+
+    .op-command-title {
+      margin: 0;
+      font-size: 12px;
+      color: var(--color-text);
+    }
+
+    .op-command-card code {
+      display: block;
+      margin-top: 6px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--color-accent);
+      word-break: break-word;
+    }
+
+    .op-command-note {
+      margin: 8px 0 0;
+      font-size: 11px;
+      color: var(--color-text-muted);
+    }
+
+    .op-doc-groups {
+      border-top: 1px solid color-mix(in srgb, var(--color-border) 50%, transparent);
+      padding-top: 20px;
+    }
+  </style>
+</DocsLayout>

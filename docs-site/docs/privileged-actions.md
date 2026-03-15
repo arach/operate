@@ -15,7 +15,7 @@ Operate should remain non-interactive and auditable by default, while still allo
    - Any operation requiring a password must fail fast with a structured blocker message.
 
 3. **Escalation via explicit allowlist**
-   - Introduce a dedicated privileged action endpoint (future phase) that only allows pre-approved commands.
+   - Introduce a dedicated privileged action endpoint that only allows pre-approved commands.
    - Require host + command template ID + arguments validation.
 
 4. **Use dedicated privilege channels**

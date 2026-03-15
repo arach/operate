@@ -1,0 +1,281 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+
+const quickActions = [
+  {
+    command: 'bun run start',
+    output: 'operate listening on http://localhost:8787',
+  },
+  {
+    command: 'bun run operate discover --hosts arts',
+    output: 'Probed arts: hermes, opencode ✓',
+  },
+  {
+    command: 'bun run operate session create-agent --host arts --name op-agent',
+    output: 'Session op-agent created on arts',
+  },
+]
+---
+
+<BaseLayout title="Operate" description="Control plane for running agent workloads across remote hosts. Open source.">
+  <main class="landing-main">
+    <div class="landing-content">
+      <section class="op-hero">
+        <p class="op-kicker">Operate control plane</p>
+        <h1 class="op-title">Run remote agents with predictable control.</h1>
+        <p class="op-subtitle">
+          Operate gives you one routing layer for host discovery, runtime selection, jobs, and tmux-backed sessions.
+          Keep local ergonomics and remote execution in a single workflow.
+        </p>
+        <div class="op-hero-actions">
+          <a href="https://github.com/arach/operate" class="op-btn op-btn-primary" target="_blank" rel="noopener noreferrer">View on GitHub</a>
+        </div>
+      </section>
+
+      <section class="op-terminal-wrap" aria-label="Common operate commands">
+        <div class="op-terminal">
+          <div class="op-terminal-bar">
+            <span class="op-terminal-dot op-terminal-dot--red"></span>
+            <span class="op-terminal-dot op-terminal-dot--yellow"></span>
+            <span class="op-terminal-dot op-terminal-dot--green"></span>
+            <span class="op-terminal-title">operate</span>
+          </div>
+          <div class="op-terminal-body">
+            {quickActions.map((action) => (
+              <div class="op-terminal-block">
+                <div class="op-terminal-line">
+                  <span class="op-terminal-prompt">&gt;</span>
+                  <span class="op-terminal-cmd">{action.command}</span>
+                  <button type="button" class="op-terminal-copy" data-copy={action.command} title="Copy">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    <span class="op-terminal-copy-text">copy</span>
+                  </button>
+                </div>
+                <p class="op-terminal-output">{action.output}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <style is:inline>
+    .landing-main {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 48px 24px 80px;
+    }
+
+    .landing-content {
+      width: 100%;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .op-hero {
+      margin-bottom: 24px;
+      padding: 28px;
+      border-radius: 20px;
+      border: 1px solid color-mix(in srgb, var(--color-border) 72%, transparent);
+      background:
+        radial-gradient(circle at 84% 12%, color-mix(in srgb, var(--color-accent-2) 22%, transparent), transparent 45%),
+        radial-gradient(circle at 0% 100%, color-mix(in srgb, var(--color-accent) 18%, transparent), transparent 52%),
+        color-mix(in srgb, var(--color-surface) 92%, transparent);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .op-kicker {
+      margin: 0;
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--color-text-muted);
+    }
+
+    .op-title {
+      margin: 10px 0 0;
+      font-family: 'Instrument Serif', serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      border: 0;
+      padding: 0;
+    }
+
+    .op-subtitle {
+      margin: 14px 0 0;
+      max-width: 62ch;
+      color: var(--color-text-muted);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .op-hero-actions {
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .op-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      border: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent);
+      padding: 8px 14px;
+      font-family: 'Geist Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: all 0.16s ease;
+      color: var(--color-text);
+      background: color-mix(in srgb, var(--color-surface) 80%, transparent);
+    }
+
+    .op-btn:hover {
+      border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
+    }
+
+    .op-btn-primary {
+      color: #ffffff;
+      border-color: color-mix(in srgb, var(--color-accent) 55%, transparent);
+      background: linear-gradient(120deg, var(--color-accent), var(--color-accent-2));
+    }
+
+    [data-theme='dark'] .op-btn-primary {
+      color: #08131a;
+    }
+
+    .op-terminal-wrap {
+      margin-bottom: 30px;
+    }
+
+    .op-terminal {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid color-mix(in srgb, var(--color-border) 72%, transparent);
+      background: #0c0c0b;
+      box-shadow: var(--shadow-soft);
+    }
+
+    [data-theme='dark'] .op-terminal {
+      background: #0c0c0b;
+      border-color: rgba(255,255,255,0.1);
+    }
+
+    .op-terminal-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .op-terminal-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .op-terminal-dot--red { background: #ff5f56; }
+    .op-terminal-dot--yellow { background: #ffbd2e; }
+    .op-terminal-dot--green { background: #27ca40; }
+
+    .op-terminal-title {
+      font-family: 'Geist Mono', monospace;
+      font-size: 11px;
+      color: rgba(255,255,255,0.4);
+      margin-left: 12px;
+    }
+
+    .op-terminal-body {
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .op-terminal-block {
+      margin-bottom: 8px;
+    }
+
+    .op-terminal-block:last-child { margin-bottom: 0; }
+
+    .op-terminal-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Geist Mono', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #fff;
+    }
+
+    .op-terminal-prompt {
+      color: rgba(255,255,255,0.5);
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    .op-terminal-cmd {
+      flex: 1;
+      color: var(--color-accent);
+      word-break: break-word;
+    }
+
+    [data-theme='dark'] .op-terminal-cmd {
+      color: #7ac4ff;
+    }
+
+    .op-terminal-copy {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: none;
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.5);
+      font-family: 'Geist Mono', monospace;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+
+    .op-terminal-copy:hover {
+      background: rgba(255,255,255,0.14);
+      color: rgba(255,255,255,0.8);
+    }
+
+    .op-terminal-copy.copied .op-terminal-copy-text { display: none; }
+    .op-terminal-copy.copied::after { content: 'Copied'; }
+
+    .op-terminal-output {
+      margin: 2px 0 0 20px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.55);
+      font-family: 'Geist Mono', monospace;
+    }
+  </style>
+
+  <script is:inline>
+    document.querySelectorAll('.op-terminal-copy').forEach(function (btn) {
+      btn.addEventListener('click', async function () {
+        const text = this.getAttribute('data-copy')
+        if (!text) return
+        try {
+          await navigator.clipboard.writeText(text)
+          this.classList.add('copied')
+          setTimeout(() => this.classList.remove('copied'), 2000)
+        } catch {}
+      })
+    })
+  </script>
+</BaseLayout>

@@ -70,6 +70,10 @@ bun run operate session kill --host arts --name op-test
 
 # shorthand agent UX (host alias + session)
 bun run operate agent arts -s op-agent -- "echo hello from session"
+
+# one-off local run (haiku by default, no remote, no sessions)
+bun run operate local "write a commit message for my last change"
+bun run operate local "summarize this" --model sonnet
 ```
 
 Configure defaults (clean, no env prefix needed):

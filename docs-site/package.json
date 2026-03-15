@@ -4,14 +4,19 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "astro dev",
+    "dev": "astro dev --port 41792 --host",
     "build": "astro build",
     "postbuild": "npx -y pagefind --site dist",
     "preview": "astro preview"
   },
   "dependencies": {
-    "astro": "^5.2.0",
+    "@arach/arc": "file:../../arc/packages/arc",
+    "@astrojs/react": "^4.3.1",
     "@tailwindcss/vite": "^4.1.0",
+    "astro": "^5.2.0",
+    "lucide-react": "^0.562.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
     "tailwindcss": "^4.1.0"
   }
 }

@@ -190,4 +190,6 @@ export interface OpencodeDispatchRequest {
   cwd?: string;
   jobMode?: JobMode;
   timeoutMs?: number;
+  /** Model in provider/model format (e.g. anthropic/claude-3-5-haiku-latest) */
+  model?: string;
 }

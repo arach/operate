@@ -83,14 +83,18 @@ Operate exposes first-class OpenCode dispatch behavior:
 
 ## Routing
 
-`POST /route/plan` scores host/runtime candidates based on constraints:
+When callers do not pin an exact host/runtime pair, Operate routes by intent:
 
-- required runtime
-- preferred runtime
-- preferred host
-- runtime/host health signals
+- **requiredRuntime** is a hard filter (ineligible hosts are removed)
+- **preferredRuntime** and **preferredHost** are soft ranking signals
+- healthy hosts receive a small bias
 
-The response includes all candidates plus selected target.
+The result is intentionally simple for operators:
+
+- **selected**: the best-fit host/runtime target used for dispatch
+- **candidates**: ordered alternatives with reasons for fallback/debug visibility
+
+This keeps routing user-facing (intent → target) while preserving inspectable ranking output.
 
 ## Discovery
 

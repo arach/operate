@@ -1,79 +1,132 @@
-# Operate Architecture (Phase 1)
+# Operate Architecture
 
 ## Goal
 
-Operate acts as a machine-aware service discovery and routing control plane for heterogeneous agent runtimes.
+Operate is a machine-aware control plane for orchestrating agent runtimes across remote hosts.
+
+It standardizes:
+
+- host discovery,
+- runtime capability tracking,
+- routing decisions,
+- one-shot jobs,
+- and long-running named sessions.
 
 ## Planes
 
 ### 1. Control Plane (`operate`)
 
-- Keeps machine inventory and runtime capabilities
-- Exposes API for discovery and snapshot retrieval
-- Provides stable semantics for later scheduling/routing
+- Maintains inventory snapshots and runtime capability state
+- Exposes API/CLI for discovery, routing, jobs, and sessions
+- Applies consistent execution semantics regardless of remote host differences
 
 ### 2. Execution Plane (remote hosts)
 
-- Accessed over SSH only (Phase 1)
-- Probed for OS/arch/hostname and runtime binaries
-- Runtime detection targets:
-  - Hermes Agent (`hermes`)
-  - OpenCode (`opencode`)
-  - Claude Code (`claude`)
+- Accessed primarily via SSH transport
+- Optional WebSocket transport path is available via config
+- Hosts are probed for runtime binaries and platform identity
+
+Supported runtime targets:
+
+- Hermes (`hermes`)
+- OpenCode (`opencode`)
+- Claude (`claude`)
 
 ## Capability Model
 
-Each host snapshot includes:
+Each host inventory record contains:
 
-- `machine`: identity and platform data
-- `runtimes[]`: runtime name, path, version, and current status
-- `probedAt`: timestamp
-- `errors[]`: transport/probe errors
+- `machine` (host, hostname, os, arch)
+- `runtimes[]` (name, binaryPath, version, status)
+- `probedAt`
+- `errors[]`
 
-## Security Defaults (Phase 1)
+Inventory is persisted at:
 
-- SSH with `BatchMode=yes`
-- SSH connect timeout enforced
-- Probe timeout enforced per host
-- No remote file mutation (read-only probe commands)
+- `.operate/inventory-snapshot.json`
 
-## Current API Surface
+## Execution Semantics
 
-- `POST /inventory/discover`
-  - Input host list
-  - Runs probes and stores latest snapshot in memory + disk (`.operate/inventory-snapshot.json`)
-- `GET /inventory`
-  - Returns latest snapshot (restored from disk on boot)
-- `GET /runtimes`
-  - Returns known runtime names and currently supported adapters
-- `POST /runtimes/:runtime/tools`
-  - Runs runtime-specific tool listing on target host
-- `POST /runtimes/:runtime/execute`
-  - Executes runtime command args on target host via adapter
+### Jobs (one-shot)
 
-## Phase 2 (in progress)
+Jobs represent command-style execution and persist lifecycle state:
 
-- ✅ Persistent inventory state store (JSON file)
-- ✅ Adapter abstraction introduced
-- ✅ Hermes adapter implemented (`execute`, `listTools`)
+- `queued`
+- `running`
+- `completed`
+- `failed`
 
-## Phase 3 (in progress)
+Jobs persist at:
 
-- ✅ Additional adapters implemented (OpenCode, Claude)
-- ✅ Routing policy endpoint (`POST /route/plan`) with scored candidates
-- ✅ Job lifecycle skeleton (`queued/running/completed/failed`)
+- `.operate/jobs.json`
 
-## Phase 4 (in progress)
+Modes:
 
-- ✅ Persistent jobs store (JSON file)
-- ✅ Async worker queue for `mode: "async"` jobs
-- ✅ Retry control endpoint (`POST /jobs/:id/retry`)
-- ⏭ Streaming lifecycle and cancellation semantics
-- ⏭ Durable queue semantics (priorities, backoff, dead-letter)
+- `sync` (waits for completion)
+- `async` (returns immediately and runs in queue worker)
 
-## Phase 5 (in progress)
+### Sessions (long-running)
 
-- ✅ Transport abstraction hardened with config-driven selection
-- ✅ `ssh` transport (default) via OpenSSH executor
-- ✅ `websocket` transport option for RPC-style remote command execution
-- ⏭ Add first-party WebSocket worker/agent daemon reference implementation
+Operate uses remote tmux-backed named sessions for persistent context:
+
+- create/list/check/send/capture/kill
+- optional keep-alive behavior for agent workflows
+
+This enables iterative multi-message interactions (for example OpenCode agent sessions).
+
+### OpenCode Dispatch Modes
+
+Operate exposes first-class OpenCode dispatch behavior:
+
+- `command` mode: one-shot, job-oriented
+- `agent` mode: session-oriented, context-preserving
+
+## Routing
+
+`POST /route/plan` scores host/runtime candidates based on constraints:
+
+- required runtime
+- preferred runtime
+- preferred host
+- runtime/host health signals
+
+The response includes all candidates plus selected target.
+
+## Discovery
+
+Two discovery flows are supported:
+
+- explicit host discovery (`/inventory/discover`)
+- Tailscale-based discovery (`/inventory/discover/tailscale`)
+
+Tailscale discovery supports source preference (`ip|dns|both`) and optional offline inclusion.
+
+## Transport Layer
+
+Runtime execution uses a transport abstraction:
+
+- default: SSH (`OpenSSHExecutor`)
+- optional: WebSocket command transport
+
+This keeps runtime adapters stable while allowing future transport additions.
+
+## Route Selection Diagram
+
+![Operate route planning diagram](/diagrams/operate-route-plan.svg)
+
+_`POST /route/plan` evaluates candidate host/runtime pairs, ranks them, and returns the selected target with alternatives._
+
+## Security Model
+
+Default model is non-interactive, user-level execution.
+
+Privileged operations are explicitly gated:
+
+- endpoint: `POST /privileged/sudo`
+- gate: `OPERATE_ENABLE_PRIVILEGED=1`
+
+For production, prefer constrained non-interactive sudo allowlists or dedicated privileged helper services.
+
+## API Surface
+
+See `docs/api.md` for full endpoint reference and request/response formats.

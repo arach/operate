@@ -1,0 +1,155 @@
+---
+import '../styles/global.css'
+
+const { title = 'Operate', description } = Astro.props
+const pageTitle = `${title} - Operate`
+const pageDescription = description || 'Operate — control plane for remote agent workloads'
+const baseUrl = Astro.site?.pathname ?? '/'
+const normalizedBase = baseUrl.replace(/\/$/, '')
+const withBase = (path: string) => `${normalizedBase}${path}`
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={pageDescription} />
+    <title>{pageTitle}</title>
+    <link rel="icon" href={withBase('/favicon.svg')} type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+    <script is:inline>
+      ;(function () {
+        try {
+          var saved = localStorage.getItem('theme')
+        } catch (e) {}
+        var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+        document.documentElement.setAttribute('data-theme', theme)
+      })()
+    </script>
+  </head>
+  <body>
+    <div class="dl" data-theme-root>
+      <header class="dl-header">
+        <div class="dl-header-left">
+          <a href={withBase('/')} class="dl-header-brand">Operate</a>
+          <span class="dl-header-sep">/</span>
+        </div>
+        <div class="dl-header-right">
+          <a href={withBase('/docs/overview')} class="dl-header-link">Docs</a>
+          <a href={withBase('/llms.txt')} class="dl-header-link">llms.txt</a>
+          <button class="dl-theme-btn" type="button" data-theme-toggle title="Toggle theme">
+            <svg class="dl-theme-icon-light" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+            <svg class="dl-theme-icon-dark" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </button>
+        </div>
+      </header>
+      <div class="dl-body">
+        <slot />
+      </div>
+    </div>
+
+    <style is:inline>
+      .dl {
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at 14% -8%, color-mix(in srgb, var(--color-accent) 16%, transparent), transparent 52%),
+          radial-gradient(circle at 86% 4%, color-mix(in srgb, var(--color-accent-2) 20%, transparent), transparent 48%),
+          var(--color-bg);
+        color: var(--color-text);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .dl-body {
+        display: flex;
+        flex: 1;
+      }
+
+      .dl-header {
+        height: 56px;
+        flex-shrink: 0;
+        border-bottom: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent);
+        background: color-mix(in srgb, var(--color-bg) 84%, transparent);
+        backdrop-filter: blur(14px);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        position: sticky;
+        top: 0;
+        z-index: 50;
+      }
+
+      .dl-header-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .dl-header-right {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .dl-header-brand {
+        font-family: 'Geist Mono', monospace;
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--color-text-muted);
+        text-decoration: none;
+        transition: color 0.15s;
+      }
+
+      .dl-header-brand:hover { color: var(--color-text); }
+
+      .dl-header-sep {
+        color: var(--color-border);
+        font-size: 14px;
+      }
+
+      .dl-header-link {
+        font-family: 'Geist Mono', monospace;
+        font-size: 11px;
+        color: var(--color-text-muted);
+        text-decoration: none;
+        transition: color 0.15s;
+      }
+
+      .dl-header-link:hover { color: var(--color-accent); }
+
+      .dl-theme-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: none;
+        border: none;
+        color: var(--color-text-muted);
+        cursor: pointer;
+        padding: 4px;
+        transition: color 0.15s;
+      }
+
+      .dl-theme-btn:hover { color: var(--color-text); }
+
+      .dl-theme-icon-dark { display: none; }
+      [data-theme='dark'] .dl-theme-icon-light { display: none; }
+      [data-theme='dark'] .dl-theme-icon-dark { display: block; }
+    </style>
+    <script is:inline>
+      (() => {
+        var themeToggle = document.querySelector('[data-theme-toggle]')
+        themeToggle && themeToggle.addEventListener('click', function () {
+          var current = document.documentElement.getAttribute('data-theme') || 'light'
+          var next = current === 'dark' ? 'light' : 'dark'
+          document.documentElement.setAttribute('data-theme', next)
+          try { localStorage.setItem('theme', next) } catch (e) {}
+        })
+      })()
+    </script>
+  </body>
+</html>

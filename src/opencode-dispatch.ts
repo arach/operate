@@ -17,10 +17,13 @@ export class OpencodeDispatchService {
 
   async dispatch(request: OpencodeDispatchRequest): Promise<Record<string, unknown>> {
     if (request.mode === "command") {
+      const args = request.model
+        ? ["run", "-m", request.model, request.message]
+        : ["run", request.message];
       const jobRequest: CreateJobRequest = {
         host: request.host,
         runtime: "opencode",
-        args: ["run", request.message],
+        args,
         mode: request.jobMode ?? "sync"
       };
 

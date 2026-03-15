@@ -9,7 +9,7 @@ const normalizedBase = baseUrl.replace(/\/$/, '')
 const withBase = (path: string) => `${normalizedBase}${path}`
 ---
 <!doctype html>
-<html lang="en">
+<html lang="en" data-base-url={normalizedBase}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -37,9 +37,9 @@ const withBase = (path: string) => `${normalizedBase}${path}`
         <div class="dl-header-left">
           <a href={withBase('/')} class="dl-header-brand">Operate</a>
           <span class="dl-header-sep">/</span>
-          <a href={withBase('/')} class="dl-header-brand dl-header-brand--active">Docs</a>
         </div>
         <div class="dl-header-right">
+          <a href={withBase('/docs/overview')} class="dl-header-link">Docs</a>
           <a href={withBase('/llms.txt')} class="dl-header-link">llms.txt</a>
           <button class="dl-search-btn" type="button" data-search-toggle data-pagefind-ignore>
             Search…
@@ -74,10 +74,7 @@ const withBase = (path: string) => `${normalizedBase}${path}`
     <style is:inline>
       .dl {
         min-height: 100vh;
-        background:
-          radial-gradient(circle at 14% -8%, color-mix(in srgb, var(--color-accent) 16%, transparent), transparent 52%),
-          radial-gradient(circle at 86% 4%, color-mix(in srgb, var(--color-accent-2) 20%, transparent), transparent 48%),
-          var(--color-bg);
+        background: var(--color-bg);
         color: var(--color-text);
         display: flex;
         flex-direction: column;
@@ -347,8 +344,6 @@ const withBase = (path: string) => `${normalizedBase}${path}`
             console.error('UI init failed', error)
           }
         }
-
-        document.documentElement.dataset.baseUrl = {JSON.stringify(normalizedBase)}
 
         var addCopyButtons = function () {
           document.querySelectorAll('pre').forEach(function (block) {

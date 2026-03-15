@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   createCommandTransport,
+  LocalBypassTransport,
   readTransportConfig,
   SshCommandTransport,
   WebSocketCommandTransport
@@ -39,7 +40,8 @@ describe("createCommandTransport", () => {
       new OpenSSHExecutor()
     );
 
-    expect(transport).toBeInstanceOf(SshCommandTransport);
+    expect(transport).toBeInstanceOf(LocalBypassTransport);
+    expect(transport.getRemote()).toBeInstanceOf(SshCommandTransport);
   });
 
   test("throws when websocket config is missing URL", () => {
@@ -65,6 +67,18 @@ describe("createCommandTransport", () => {
       new OpenSSHExecutor()
     );
 
-    expect(transport).toBeInstanceOf(WebSocketCommandTransport);
+    expect(transport).toBeInstanceOf(LocalBypassTransport);
+    expect(transport.getRemote()).toBeInstanceOf(WebSocketCommandTransport);
+  });
+
+  test("runs localhost commands directly without SSH", async () => {
+    const transport = createCommandTransport(
+      { kind: "ssh", websocketConnectTimeoutMs: 5000 },
+      new OpenSSHExecutor()
+    );
+
+    const result = await transport.run("localhost", "echo hello");
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout.trim()).toBe("hello");
   });
 });

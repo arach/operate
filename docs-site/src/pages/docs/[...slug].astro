@@ -1,8 +1,12 @@
 ---
 import DocsLayout from '../../layouts/DocsLayout.astro'
+import ArcDiagramEmbed from '../../components/ArcDiagramEmbed'
+import controlPlaneDiagram from '../../diagrams/operate-control-plane.diagram'
+import jobsSessionsDiagram from '../../diagrams/operate-jobs-sessions-flow.diagram'
+import routePlanDiagram from '../../diagrams/operate-route-plan.diagram'
 
 export async function getStaticPaths() {
-  const markdownFiles = import.meta.glob('../../../docs/**/*.md')
+  const markdownFiles = import.meta.glob('../../../../docs/**/*.md')
 
   const entries = Object.entries(markdownFiles).filter(([filePath]) => {
     if (filePath.endsWith('.agent.md')) return false
@@ -34,11 +38,11 @@ const fallbackTitle = fileName
 const title = frontmatter?.title ?? fallbackTitle
 const description = frontmatter?.description
 
-const rawMarkdownFiles = import.meta.glob('../../../docs/**/*.md', {
+const rawMarkdownFiles = import.meta.glob('../../../../docs/**/*.md', {
   query: '?raw',
   import: 'default',
 })
-const agentMarkdownFiles = import.meta.glob('../../../docs/**/*.agent.md', {
+const agentMarkdownFiles = import.meta.glob('../../../../docs/**/*.agent.md', {
   query: '?raw',
   import: 'default',
 })
@@ -52,5 +56,14 @@ const agentMarkdown = agentLoader ? await agentLoader() : ''
 ---
 
 <DocsLayout title={title} headings={headings} description={description} rawMarkdown={rawMarkdown} agentMarkdown={agentMarkdown}>
+  {slug === 'overview' && (
+    <ArcDiagramEmbed client:load title="Operate at a glance" caption="One control plane, one dispatch path, and remote execution with persistent session support." data={controlPlaneDiagram} />
+  )}
+  {slug === 'quickstart' && (
+    <ArcDiagramEmbed client:load title="Jobs & Sessions Dispatch Flow" caption="Command mode persists jobs; agent mode flows through tmux-backed sessions." data={jobsSessionsDiagram} />
+  )}
+  {slug === 'architecture' && (
+    <ArcDiagramEmbed client:load title="Route selection model" caption="Intent + inventory in, selected target + alternatives out — without exposing scoring internals." data={routePlanDiagram} />
+  )}
   <Content />
 </DocsLayout>

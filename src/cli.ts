@@ -42,7 +42,10 @@ function usage(): string {
     "  bun run cli opencode command --host <host> --message 'hello' [--job-mode sync|async]",
     "  bun run cli opencode agent --host <host> --session <name> --message 'continue from here' [--cwd /path]",
     "  bun run cli agent <host-alias> -s <session> -- <message>",
+    "  bun run cli local <message> [--model haiku|sonnet|opus]",
     "  bun run cli privileged sudo --host <host> --command '<cmd>' --password '<pw>' [--timeout 30000]",
+    "",
+    "  local: one-off run on localhost, haiku by default. Does not affect other agents.",
     "",
     "Global options:",
     "  --url, -u <url>            Override operate server URL for this command",
@@ -171,6 +174,22 @@ function resolveHostAlias(value: string): string {
     throw new Error("host cannot be empty");
   }
   return mergedAliases()[normalized] ?? normalized;
+}
+
+/**
+ * Prevent local tilde expansion from leaking into remote paths.
+ * When the shell expands `~/foo` to `/Users/arach/foo` before the CLI
+ * receives it, the absolute local path is wrong for a remote host whose
+ * home directory differs (e.g. `/Users/art`).  Converting the local
+ * homedir prefix back to `~` lets it expand correctly on the remote.
+ */
+function remoteSafePath(value: string): string {
+  const home = homedir();
+  if (value === home) return "~";
+  if (value.startsWith(home + "/")) {
+    return "~" + value.slice(home.length);
+  }
+  return value;
 }
 
 export function parseDiscoverHostsArgs(args: string[]): string[] {
@@ -379,6 +398,29 @@ async function main(argv: string[]): Promise<void> {
     }
   }
 
+  if (command === "local") {
+    const { args: localRest, value: modelFlag } = removeFlag(rest, "--model", "-m");
+    const message = localRest.join(" ").trim();
+    if (!message) {
+      throw new Error("usage: operate local <message> [--model haiku|sonnet|opus]");
+    }
+    const MODEL_ALIASES: Record<string, string> = {
+      haiku: "anthropic/claude-3-5-haiku-latest",
+      sonnet: "anthropic/claude-sonnet-4-20250514",
+      opus: "anthropic/claude-opus-4-20250514"
+    };
+    const model = modelFlag ? (MODEL_ALIASES[modelFlag.toLowerCase()] ?? modelFlag) : MODEL_ALIASES.haiku;
+    const payload = {
+      host: resolveHostAlias("local"),
+      mode: "command" as const,
+      message,
+      jobMode: "sync" as const,
+      model
+    };
+    await request("POST", "/opencode/dispatch", payload, baseUrl);
+    return;
+  }
+
   if (command === "health") {
     await request("GET", "/health", undefined, baseUrl);
     return;
@@ -466,7 +508,7 @@ async function main(argv: string[]): Promise<void> {
         name: parsed.name
       };
       if (cwd) {
-        payload.cwd = cwd;
+        payload.cwd = remoteSafePath(cwd);
       }
       if (commandText) {
         payload.command = commandText;
@@ -492,7 +534,7 @@ async function main(argv: string[]): Promise<void> {
         keepAlive: true
       };
       if (cwd) {
-        payload.cwd = cwd;
+        payload.cwd = remoteSafePath(cwd);
       }
       await request("POST", "/sessions", payload, baseUrl);
       return;
@@ -617,7 +659,7 @@ async function main(argv: string[]): Promise<void> {
       };
 
       if (cwd) {
-        payload.cwd = cwd;
+        payload.cwd = remoteSafePath(cwd);
       }
 
       await request("POST", "/opencode/dispatch", payload, baseUrl);

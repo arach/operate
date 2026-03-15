@@ -48,6 +48,10 @@ bun run operate discover tailscale --source ip
 bun run operate opencode command --host arts --message "echo hello" --job-mode sync
 ```
 
+![Operate jobs and sessions flow](/diagrams/operate-jobs-sessions-flow.svg)
+
+_Dispatch behavior: command mode flows through persisted jobs, while agent mode creates/uses tmux-backed named sessions._
+
 ## 6) Start a persistent OpenCode agent session
 
 ```bash

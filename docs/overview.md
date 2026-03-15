@@ -21,7 +21,7 @@ Operate discovers hosts (manually or via Tailscale), probes runtime availability
 
 ### Routing
 
-`POST /route/plan` ranks candidates and returns a selected host/runtime based on constraints and preferences.
+`POST /route/plan` applies your runtime/host intent to live inventory, picks a best-fit target, and returns alternatives for fallback visibility.
 
 ### Jobs (One-shot execution)
 

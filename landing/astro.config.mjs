@@ -1,5 +1,4 @@
 import { defineConfig } from 'astro/config'
-import react from '@astrojs/react'
 import tailwind from '@tailwindcss/vite'
 
 const isGitHubPages = process.env.GITHUB_ACTIONS === 'true'
@@ -8,12 +7,6 @@ export default defineConfig({
   output: 'static',
   site: 'https://arach.github.io',
   base: isGitHubPages ? '/operate' : '/',
-  integrations: [react()],
-  markdown: {
-    shikiConfig: {
-      theme: 'vitesse-dark',
-    },
-  },
   vite: {
     plugins: [tailwind()],
   },

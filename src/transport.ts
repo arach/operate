@@ -1,5 +1,52 @@
 import type { CommandTransport, SSHExecutor, SSHResult, TransportConfig, TransportKind } from "./types";
 
+const LOCAL_HOSTS = new Set(["localhost", "local", "127.0.0.1", ""]);
+
+function isLocalHost(host: string): boolean {
+  return LOCAL_HOSTS.has(host.toLowerCase().trim());
+}
+
+/** Runs commands directly on localhost; delegates to remote transport otherwise. */
+export class LocalBypassTransport implements CommandTransport {
+  constructor(private readonly remote: CommandTransport) {}
+
+  /** Exposed for tests; returns the underlying remote transport. */
+  getRemote(): CommandTransport {
+    return this.remote;
+  }
+
+  async run(host: string, command: string, timeoutMs?: number): Promise<SSHResult> {
+    if (!isLocalHost(host)) {
+      return this.remote.run(host, command, timeoutMs);
+    }
+
+    const timeout = timeoutMs ?? 30_000;
+    const proc = Bun.spawn(["sh", "-c", command], {
+      stdout: "pipe",
+      stderr: "pipe",
+      cwd: process.cwd()
+    });
+
+    const timeoutId = setTimeout(() => {
+      proc.kill();
+    }, timeout);
+
+    try {
+      const [stdout, stderr] = await Promise.all([proc.stdout.text(), proc.stderr.text()]);
+      const exitCode = await proc.exited;
+      return { stdout, stderr, exitCode };
+    } catch (e) {
+      return {
+        stdout: "",
+        stderr: e instanceof Error ? e.message : String(e),
+        exitCode: 255
+      };
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+}
+
 export class SshCommandTransport implements CommandTransport {
   constructor(private readonly ssh: SSHExecutor) {}
 
@@ -161,17 +208,18 @@ export function readTransportConfig(env: NodeJS.ProcessEnv = process.env): Trans
 }
 
 export function createCommandTransport(config: TransportConfig, ssh: SSHExecutor): CommandTransport {
+  let base: CommandTransport;
   if (config.kind === "ssh") {
-    return new SshCommandTransport(ssh);
+    base = new SshCommandTransport(ssh);
+  } else {
+    if (!config.websocketUrl) {
+      throw new Error("OPERATE_WS_URL is required when OPERATE_TRANSPORT=websocket");
+    }
+    base = new WebSocketCommandTransport(
+      config.websocketUrl,
+      config.websocketAuthToken,
+      config.websocketConnectTimeoutMs
+    );
   }
-
-  if (!config.websocketUrl) {
-    throw new Error("OPERATE_WS_URL is required when OPERATE_TRANSPORT=websocket");
-  }
-
-  return new WebSocketCommandTransport(
-    config.websocketUrl,
-    config.websocketAuthToken,
-    config.websocketConnectTimeoutMs
-  );
+  return new LocalBypassTransport(base);
 }
