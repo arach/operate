@@ -4,6 +4,7 @@ import type {
   TailscaleDiscoverRequest
 } from "./types";
 import type { TailscaleSourcePreference } from "./tailscale-discovery";
+import { grabAudio, grabCheck } from "./grab";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -44,7 +45,10 @@ function usage(): string {
     "  bun run cli agent <host-alias> -s <session> -- <message>",
     "  bun run cli local <message> [--model haiku|sonnet|opus]",
     "  bun run cli privileged sudo --host <host> --command '<cmd>' --password '<pw>' [--timeout 30000]",
+    "  bun run cli grab <youtube-url> [--host arts] [--output ~/Music/grabs] [--format opus|mp3] [--bitrate 128k]",
+    "  bun run cli grab check [--host arts]",
     "",
+    "  grab: download YouTube audio on a remote host. Default: opus 128k (default host: arts).",
     "  local: one-off run on localhost, haiku by default. Does not affect other agents.",
     "",
     "Global options:",
@@ -702,6 +706,51 @@ async function main(argv: string[]): Promise<void> {
       await request("POST", "/privileged/sudo", payload, baseUrl);
       return;
     }
+  }
+
+  if (command === "grab") {
+    const subcommand = rest[0];
+
+    if (subcommand === "check") {
+      const host = readFlag(rest, "--host") ?? "arts";
+      const resolved = resolveHostAlias(host);
+      console.log(`Checking yt-dlp and ffmpeg on ${resolved}...`);
+      const result = await grabCheck(resolved);
+      console.log(JSON.stringify(result, null, 2));
+      return;
+    }
+
+    // grab <url> [--host arts] [--output ~/Music/grabs]
+    const url = subcommand;
+    if (!url) {
+      throw new Error("usage: grab <youtube-url> [--host arts] [--output ~/Music/grabs]");
+    }
+
+    const host = readFlag(rest, "--host") ?? "arts";
+    const output = readFlag(rest, "--output");
+    const format = readFlag(rest, "--format");
+    const bitrate = readFlag(rest, "--bitrate");
+
+    if (format && format !== "opus" && format !== "mp3") {
+      throw new Error("--format must be opus or mp3");
+    }
+
+    const grabOptions: Parameters<typeof grabAudio>[0] = {
+      url,
+      host: resolveHostAlias(host),
+    };
+    if (output) grabOptions.outputDir = output;
+    if (format) grabOptions.format = format as "opus" | "mp3";
+    if (bitrate) grabOptions.bitrate = bitrate;
+
+    const result = await grabAudio(grabOptions);
+
+    if (!result.ok) {
+      throw new Error(`grab failed (exit ${result.exitCode})`);
+    }
+
+    console.log(`\nDone. Saved to ${result.outputDir} on ${result.host}`);
+    return;
   }
 
   if (command === "agent") {
